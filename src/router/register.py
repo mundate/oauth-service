@@ -5,12 +5,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
-from pydantic import EmailStr, SecretStr
+from pydantic import SecretStr
 from pydantic_core import ValidationError
 
 from src.database import SessionDep
-from src.models import User
-from src.schemas import AuthorizeRequest, RegisterRequest, RegisterResponse, TokenRequest, TokenResponse
+from src.schemas import RegisterRequest
 from src.service import register as regiser_service
 
 register_router = APIRouter()
@@ -27,7 +26,7 @@ def register_form(request: Request):
 def register_user(
     request: Request,
     session: SessionDep,
-    email: Annotated[EmailStr, Form()],
+    email: Annotated[str, Form()],
     password: Annotated[SecretStr, Form()],
 ):
     def show_error(message: str, code: int):
@@ -44,5 +43,3 @@ def register_user(
 
     return RedirectResponse("/verify", status_code=status.HTTP_303_SEE_OTHER)
 
-
-# @register_router.get("/verify/{}", )

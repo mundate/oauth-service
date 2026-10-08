@@ -7,8 +7,6 @@ from pydantic import SecretStr
 from sqlmodel import Field, SQLModel
 
 password_hash = PasswordHash.recommended()
-# TODO: Change this string (openssl rand hex 32)
-RANDOM_STRING = b'8b22613ccaa100a7f12410a93c89f65c262f641f391894d2df2498a8dfcdfe20'
 
 
 class User(SQLModel, table=True):
@@ -26,11 +24,10 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     def set_password(self, password: SecretStr) -> None:
-        self.hashed_password = password_hash.hash(password.get_secret_value(), salt=RANDOM_STRING)
+        self.hashed_password = password_hash.hash(password.get_secret_value())
 
     def verify_password(self, password: SecretStr) -> bool:
-        hashed_input = password_hash.hash(password.get_secret_value(), salt=RANDOM_STRING)
-        return password_hash.verify(hashed_input, self.hashed_password)
+        return password_hash.verify(password.get_secret_value(), self.hashed_password)
 
 
 class ClientCredentials(SQLModel, table=True):

@@ -1,11 +1,15 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, EmailStr, SecretStr
+from pydantic import AfterValidator, BaseModel, EmailStr, SecretStr
+
+from src.util import validate_password
+
+Password = Annotated[SecretStr, AfterValidator(validate_password)]
 
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: SecretStr
+    password: Password
 
 
 class RegisterResponse(BaseModel):

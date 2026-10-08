@@ -18,7 +18,13 @@ entrypoint = "src.main:app"
 dev = [
     "httpx2>=2.13.1",
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = ["--cov", "--cov-report=term-missing"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true

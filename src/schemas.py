@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, EmailStr, SecretStr
+from pydantic import AfterValidator, BaseModel, EmailStr, Field, SecretStr
 
 from src.util import validate_password
 
@@ -26,8 +26,30 @@ class AuthorizeRequest(BaseModel):
     redirect_uri: str | None = None
     scope: str | None = None
     state: str | None = None
-    code_challenge: str
-    code_challenge_method: Literal["S256"] = "S256"
+    # An S256 challenge is always 43 base64url characters.
+    code_challenge: str = Field(pattern=r"^[A-Za-z0-9_-]{43}$")
+    # Required: RFC 7636 treats a missing method as "plain", which this service rejects.
+    code_challenge_method: Literal["S256"]
+
+
+class AuthorizeSuccess(BaseModel):
+    code: str
+    state: str | None = None
+    iss: str
+
+
+AuthorizeErrorCode = Literal[
+    "invalid_request", "unauthorized_client", "access_denied",
+    "unsupported_response_type", "invalid_scope",
+    "server_error", "temporarily_unavailable",
+]
+
+
+class AuthorizeError(BaseModel):
+    error: AuthorizeErrorCode
+    error_description: str | None = None
+    state: str | None = None
+    iss: str
 
 
 class TokenRequest(BaseModel):

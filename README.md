@@ -36,6 +36,46 @@ Other specs define additional grant types that OAuth 2.1 servers can support:
 | JWT bearer | RFC 7523 | Authenticating with a signed JWT instead of a client secret |
 | CIBA | OpenID Connect | Approving a login on a separate device, such as a phone notification |
 
+## Tokens and codes
+
+### Tokens
+
+| Value | What it is | Lifetime | How this service stores it |
+|---|---|---|---|
+| Access token | Sent to APIs in the `Authorization: Bearer <token>` header to prove the request is allowed. Only the API reads it; the client treats it as opaque. | Short, minutes to an hour | Not implemented yet |
+| Refresh token | Exchanged at `/token` for a new access token, so the user doesn't have to log in again. Only issued in the authorization code flow. Public clients get a new one each time they use it (rotation). | Long | SHA-256 hash, 30 days |
+| ID token | An OpenID Connect JWT that tells the client who logged in. It's for the client to read, not to send to APIs. | Short | Not implemented yet |
+
+### Codes and one-time values
+
+| Value | What it is | Lifetime | How this service stores it |
+|---|---|---|---|
+| Authorization code | Returned to the client's `redirect_uri` after the user logs in, then exchanged once at `/token` for tokens. | Very short, single use | SHA-256 hash, 1 minute |
+| `code_verifier` | A random secret the client creates for each login. Sent to `/token` to prove it started the request. See [PKCE](#pkce). | One login | Never stored |
+| `code_challenge` | `BASE64URL(SHA256(code_verifier))`, sent to `/authorize`. | One login | Stored with the authorization code |
+| `state` | A random value the client sends to `/authorize` and checks on the redirect, to prevent cross-site request forgery. | One login | Never stored |
+| `nonce` | An OpenID Connect value copied into the ID token so the client can match the token to its request. | One login | Not implemented yet |
+
+### Client credentials
+
+| Value | What it is | Lifetime | How this service stores it |
+|---|---|---|---|
+| Client ID | The public identifier for an app. Safe to include in URLs and app code. | Until the client is deleted | Plain text |
+| Client secret | The app's password. Only confidential clients (ones that can keep a secret, like a backend server) get one. | Until rotated | Argon2 hash |
+
+### Values from extension grants
+
+These belong to the [extension grants](#extension-grants) and aren't supported yet.
+
+| Value | Spec | What it is |
+|---|---|---|
+| Device code | RFC 8628 | Held by the device while it polls `/token` waiting for the user to approve. |
+| User code | RFC 8628 | The short code the user types in on another device, such as `WDJB-MJHT`. |
+| Subject token and actor token | RFC 8693 | The token being swapped, and optionally the token of the service acting on the user's behalf. |
+| Client assertion | RFC 7523 | A JWT signed by the client, used instead of a client secret. |
+| `auth_req_id` | CIBA | Identifies a login request waiting for approval on the user's phone. |
+| DPoP proof | RFC 9449 | A JWT signed with a key the client holds, sent with each request so a stolen access token can't be used without that key. |
+
 ## PKCE
 
 PKCE (Proof Key for Code Exchange, RFC 7636) proves that the app exchanging an authorization code is the same app that requested it. Without it, an attacker who intercepts the code from the redirect can exchange it for tokens.
